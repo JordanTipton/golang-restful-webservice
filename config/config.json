@@ -1,5 +1,5 @@
 {
-    "dsn": "user:P@ssword!@tcp(127.0.0.1:3306)/sample",
+    "dsn": "user:Password1!@tcp(127.0.0.1:3306)/sample",
     "jwtSigningMethod": "HS256",
 	"jwtSigningKey": "",
 	"jwtVerificationKey": "",
