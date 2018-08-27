@@ -2,20 +2,32 @@ package services
 
 import (
 	"github.com/jordantipton/golang-restful-webservice/repositories"
+	"github.com/jordantipton/golang-restful-webservice/services/converters"
+	"github.com/jordantipton/golang-restful-webservice/services/errors"
 	"github.com/jordantipton/golang-restful-webservice/services/models"
 )
 
 type (
+	// UsersServicer interface for user services
 	UsersServicer interface {
-		Get(userID int) (*models.User, error)
+		GetUser(userID int) (*models.User, error)
 	}
 
+	// UsersService providers user information services
 	UsersService struct {
 		UsersPersister repositories.UsersPersister
 	}
 )
 
-func (usersService *UsersService) Get(userID int) (*models.User, error) {
-	//TODO
-	return &models.User{}, nil
+// GetUser by ID
+func (usersService *UsersService) GetUser(userID int) (*models.User, error) {
+	daoUser, err := usersService.UsersPersister.GetUser(userID)
+	if err != nil {
+		return nil, err
+	}
+	if daoUser == nil {
+		return nil, errors.NotFound
+	}
+	user := converters.ToUser(daoUser)
+	return user, nil
 }
