@@ -6,6 +6,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jordantipton/golang-restful-webservice/repositories"
+	"github.com/jordantipton/golang-restful-webservice/repositories/errors"
 	"github.com/jordantipton/golang-restful-webservice/repositories/models"
 )
 
@@ -44,6 +45,32 @@ func TestGetUserByID(t *testing.T) {
 	}
 	if user.Name != userName {
 		t.Errorf("ID, expected: %s, got: %s", userName, user.Name)
+	}
+}
+
+func TestGetUserByIDNotFound(t *testing.T) {
+	// Setup
+	userID := 1
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectQuery(fmt.Sprintf("SELECT id, name FROM user WHERE id=%d", userID)).
+		WillReturnError(fmt.Errorf("sql: no rows in result set"))
+
+	repository := repositories.UsersRepository{DB: db}
+
+	// Execute
+	_, err = repository.GetUser(userID)
+
+	// Assert
+	if mockErr := mock.ExpectationsWereMet(); mockErr != nil {
+		t.Errorf("there were unfulfilled expectations: %s", mockErr)
+	}
+	if err != errors.NotFound {
+		t.Errorf("Error, expected: %s, got: %s", errors.NotFound, err.Error())
 	}
 }
 

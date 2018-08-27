@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/jordantipton/golang-restful-webservice/repositories/errors"
 	"github.com/jordantipton/golang-restful-webservice/repositories/models"
 )
 
@@ -25,6 +26,9 @@ func (repository *UsersRepository) GetUser(userID int) (*models.User, error) {
 	statement := fmt.Sprintf("SELECT id, name FROM user WHERE id=%d", userID)
 	err := repository.DB.QueryRow(statement).Scan(&user.ID, &user.Name)
 	if err != nil {
+		if err.Error() == errors.NotFound.Error() {
+			return nil, errors.NotFound
+		}
 		return nil, err
 	}
 	return &user, nil

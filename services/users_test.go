@@ -3,6 +3,7 @@ package services_test
 import (
 	"testing"
 
+	repositoryErrors "github.com/jordantipton/golang-restful-webservice/repositories/errors"
 	repositoryModels "github.com/jordantipton/golang-restful-webservice/repositories/models"
 	"github.com/jordantipton/golang-restful-webservice/services"
 	"github.com/jordantipton/golang-restful-webservice/services/errors"
@@ -62,7 +63,7 @@ func TestGetUserByIDNotFound(t *testing.T) {
 	// Setup
 	mockUserPersister := mockUserPersister{
 		mockGetUser: func(userID int) (*repositoryModels.User, error) {
-			return nil, nil
+			return nil, repositoryErrors.NotFound
 		},
 	}
 
