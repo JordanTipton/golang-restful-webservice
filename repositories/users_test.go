@@ -20,9 +20,8 @@ func TestGetUserByID(t *testing.T) {
 	defer db.Close()
 
 	rows := sqlmock.NewRows([]string{"id", "name"}).AddRow(userID, userName)
-
-	mock.ExpectQuery(fmt.Sprintf("SELECT id, name FROM user WHERE id=%d", userID)).
-		WillReturnRows(rows)
+	expectedPrepare := mock.ExpectPrepare("SELECT id, name FROM user WHERE id=?")
+	expectedPrepare.ExpectQuery().WillReturnRows(rows)
 
 	repository := repositories.UsersRepository{DB: db}
 
@@ -57,8 +56,8 @@ func TestGetUserByIDNotFound(t *testing.T) {
 	}
 	defer db.Close()
 
-	mock.ExpectQuery(fmt.Sprintf("SELECT id, name FROM user WHERE id=%d", userID)).
-		WillReturnError(fmt.Errorf("sql: no rows in result set"))
+	expectedPrepare := mock.ExpectPrepare("SELECT id, name FROM user WHERE id=?")
+	expectedPrepare.ExpectQuery().WillReturnError(fmt.Errorf("sql: no rows in result set"))
 
 	repository := repositories.UsersRepository{DB: db}
 
@@ -83,8 +82,8 @@ func TestGetUserByIDError(t *testing.T) {
 	}
 	defer db.Close()
 
-	mock.ExpectQuery(fmt.Sprintf("SELECT id, name FROM user WHERE id=%d", userID)).
-		WillReturnError(fmt.Errorf("some error"))
+	expectedPrepare := mock.ExpectPrepare("SELECT id, name FROM user WHERE id=?")
+	expectedPrepare.ExpectQuery().WillReturnError(fmt.Errorf("some error"))
 
 	repository := repositories.UsersRepository{DB: db}
 

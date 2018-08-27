@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/jordantipton/golang-restful-webservice/repositories/errors"
 	"github.com/jordantipton/golang-restful-webservice/repositories/models"
@@ -23,8 +22,12 @@ type (
 // GetUser by ID
 func (repository *UsersRepository) GetUser(userID int) (*models.User, error) {
 	user := models.User{}
-	statement := fmt.Sprintf("SELECT id, name FROM user WHERE id=%d", userID)
-	err := repository.DB.QueryRow(statement).Scan(&user.ID, &user.Name)
+	stmt, err := repository.DB.Prepare("SELECT id, name FROM user WHERE id=?")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	err = stmt.QueryRow(userID).Scan(&user.ID, &user.Name)
 	if err != nil {
 		if err.Error() == errors.NotFound.Error() {
 			return nil, errors.NotFound
