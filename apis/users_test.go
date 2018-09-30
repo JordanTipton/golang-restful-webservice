@@ -1,6 +1,7 @@
 package apis_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
@@ -19,12 +20,20 @@ import (
 */
 
 type mockUsersServicer struct {
-	mockGetUser func(userID int) (*serviceModels.User, error)
+	mockGetUser    func(userID int) (*serviceModels.User, error)
+	mockCreateUser func(user *serviceModels.User) (*serviceModels.User, error)
 }
 
 func (m *mockUsersServicer) GetUser(userID int) (*serviceModels.User, error) {
 	if m.mockGetUser != nil {
 		return m.mockGetUser(userID)
+	}
+	return nil, nil
+}
+
+func (m *mockUsersServicer) CreateUser(user *serviceModels.User) (*serviceModels.User, error) {
+	if m.mockCreateUser != nil {
+		return m.mockCreateUser(user)
 	}
 	return nil, nil
 }
@@ -160,5 +169,119 @@ func TestGetUserByIDServerError(t *testing.T) {
 	body := w.Body.String()
 	if body != expectedBody {
 		t.Errorf("Response body, expected: %s, got: %s", expectedBody, body)
+	}
+}
+
+func TestCreateUser(t *testing.T) {
+	// Setup
+	expectedUser := models.User{
+		ID:   1,
+		Name: "Name",
+	}
+	serviceUser := &serviceModels.User{ID: expectedUser.ID, Name: expectedUser.Name}
+	mockUsersServicer := mockUsersServicer{
+		mockCreateUser: func(user *serviceModels.User) (*serviceModels.User, error) {
+			return serviceUser, nil
+		},
+	}
+
+	r := chi.NewRouter()
+	apis.RegisterUsersResource(r, &mockUsersServicer)
+
+	bodyBytes, _ := json.Marshal(models.User{Name: expectedUser.Name})
+	req := httptest.NewRequest("POST", "http://localhost:8080/users", bytes.NewReader(bodyBytes))
+	w := httptest.NewRecorder()
+
+	// Execute
+	r.ServeHTTP(w, req)
+
+	// Assert
+	if w.Code != 201 {
+		t.Errorf("HTTP status code, expected: %d, got: %d", 201, w.Code)
+	}
+
+	actualUser := models.User{}
+	json.NewDecoder(w.Body).Decode(&actualUser)
+
+	if expectedUser.ID != actualUser.ID {
+		t.Errorf("ID, expected: %d, got: %d", expectedUser.ID, actualUser.ID)
+	}
+	if expectedUser.Name != actualUser.Name {
+		t.Errorf("ID, expected: %s, got: %s", expectedUser.Name, actualUser.Name)
+	}
+}
+
+func TestCreateUserError(t *testing.T) {
+	// Setup
+	expectedUser := models.User{
+		ID:   1,
+		Name: "Name",
+	}
+	mockUsersServicer := mockUsersServicer{
+		mockCreateUser: func(user *serviceModels.User) (*serviceModels.User, error) {
+			return nil, fmt.Errorf("some error")
+		},
+	}
+
+	r := chi.NewRouter()
+	apis.RegisterUsersResource(r, &mockUsersServicer)
+
+	bodyBytes, _ := json.Marshal(models.User{Name: expectedUser.Name})
+	req := httptest.NewRequest("POST", "http://localhost:8080/users", bytes.NewReader(bodyBytes))
+	w := httptest.NewRecorder()
+
+	// Execute
+	r.ServeHTTP(w, req)
+
+	// Assert
+	if w.Code != 500 {
+		t.Errorf("HTTP status code, expected: %d, got: %d", 500, w.Code)
+	}
+}
+
+func TestCreateUserNilBodyBadRequest(t *testing.T) {
+	// Setup
+	mockUsersServicer := mockUsersServicer{
+		mockCreateUser: func(user *serviceModels.User) (*serviceModels.User, error) {
+			return nil, errors.BadRequest
+		},
+	}
+
+	r := chi.NewRouter()
+	apis.RegisterUsersResource(r, &mockUsersServicer)
+
+	req := httptest.NewRequest("POST", "http://localhost:8080/users", nil)
+	w := httptest.NewRecorder()
+
+	// Execute
+	r.ServeHTTP(w, req)
+
+	// Assert
+	if w.Code != 400 {
+		t.Errorf("HTTP status code, expected: %d, got: %d", 400, w.Code)
+	}
+}
+
+func TestCreateUserNoNameBadRequest(t *testing.T) {
+	// Setup
+	mockUsersServicer := mockUsersServicer{
+		mockCreateUser: func(user *serviceModels.User) (*serviceModels.User, error) {
+			return nil, errors.BadRequest
+		},
+	}
+
+	r := chi.NewRouter()
+	apis.RegisterUsersResource(r, &mockUsersServicer)
+
+	bodyBytes, _ := json.Marshal(models.User{})
+	req := httptest.NewRequest("POST", "http://localhost:8080/users", bytes.NewReader(bodyBytes))
+	w := httptest.NewRecorder()
+
+	// Execute
+	r.ServeHTTP(w, req)
+
+	// Assert
+	if w.Code != 400 {
+		t.Errorf("HTTP status code, expected: %d, got: %d", 400, w.Code)
 	}
 }

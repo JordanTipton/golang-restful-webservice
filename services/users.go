@@ -12,6 +12,7 @@ type (
 	// UsersServicer interface for user services
 	UsersServicer interface {
 		GetUser(userID int) (*models.User, error)
+		CreateUser(user *models.User) (*models.User, error)
 	}
 
 	// UsersService providers user information services
@@ -34,4 +35,17 @@ func (usersService *UsersService) GetUser(userID int) (*models.User, error) {
 	}
 	user := converters.ToUser(daoUser)
 	return user, nil
+}
+
+// CreateUser and return created user
+func (usersService *UsersService) CreateUser(user *models.User) (*models.User, error) {
+	if user == nil || user.Name == "" {
+		return nil, errors.BadRequest
+	}
+	daoUser, err := usersService.UsersPersister.CreateUser(converters.FromUser(user))
+	if err != nil {
+		return nil, err
+	}
+	resultUser := converters.ToUser(daoUser)
+	return resultUser, nil
 }

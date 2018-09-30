@@ -1,6 +1,6 @@
 package errors
 
-// NotFound error
+// NotFound error matches string returned by sql driver
 const NotFound = Error("sql: no rows in result set")
 
 //Error type

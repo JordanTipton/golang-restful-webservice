@@ -10,6 +10,8 @@ import (
 	"github.com/jordantipton/golang-restful-webservice/repositories/models"
 )
 
+//GetUser tests
+
 func TestGetUserByID(t *testing.T) {
 	// Setup
 	userID, userName := 1, "Bob"
@@ -97,4 +99,118 @@ func TestGetUserByIDError(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error to be returned but is nil")
 	}
+}
+
+// CreateUser tests
+
+func TestCreateUser(t *testing.T) {
+	// Setup
+	userID, userName := 1, "Bob"
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"id", "name"}).AddRow(userID, userName)
+	expectedPrepareInsert := mock.ExpectPrepare("INSERT INTO user \\(name\\) values\\(\\?\\)")
+	expectedPrepareInsert.ExpectExec().WillReturnResult(&mockResult{})
+	expectedPrepareSelect := mock.ExpectPrepare("SELECT id, name FROM user WHERE id=?")
+	expectedPrepareSelect.ExpectQuery().WillReturnRows(rows)
+
+	repository := repositories.UsersRepository{DB: db}
+
+	// Execute
+	requestUser := models.User{
+		Name: userName,
+	}
+	user, err := repository.CreateUser(&requestUser)
+
+	// Assert
+	if mockErr := mock.ExpectationsWereMet(); mockErr != nil {
+		t.Errorf("there were unfulfilled expectations: %s", mockErr)
+	}
+	if err != nil {
+		t.Errorf("CreateUser returned error: %s", err.Error())
+	}
+	if user == nil {
+		t.Errorf("CreateUser returned nil")
+	}
+	if user.ID != userID {
+		t.Errorf("ID, expected: %d, got: %d", userID, user.ID)
+	}
+	if user.Name != userName {
+		t.Errorf("ID, expected: %s, got: %s", userName, user.Name)
+	}
+}
+
+func TestCreateUserNotFound(t *testing.T) {
+	// Setup
+	userName := "Bob"
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	expectedPrepareInsert := mock.ExpectPrepare("INSERT INTO user \\(name\\) values\\(\\?\\)")
+	expectedPrepareInsert.ExpectExec().WillReturnResult(&mockResult{})
+	expectedPrepareSelect := mock.ExpectPrepare("SELECT id, name FROM user WHERE id=?")
+	expectedPrepareSelect.ExpectQuery().WillReturnError(fmt.Errorf("sql: no rows in result set"))
+
+	repository := repositories.UsersRepository{DB: db}
+
+	// Execute
+	requestUser := models.User{
+		Name: userName,
+	}
+	_, err = repository.CreateUser(&requestUser)
+
+	// Assert
+	if mockErr := mock.ExpectationsWereMet(); mockErr != nil {
+		t.Errorf("there were unfulfilled expectations: %s", mockErr)
+	}
+	if err != errors.NotFound {
+		t.Errorf("Error, expected: %s, got: %s", errors.NotFound, err.Error())
+	}
+}
+
+func TestCreateUserError(t *testing.T) {
+	// Setup
+	userName := "Bob"
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	expectedPrepareInsert := mock.ExpectPrepare("INSERT INTO user \\(name\\) values\\(\\?\\)")
+	expectedPrepareInsert.ExpectExec().WillReturnResult(&mockResult{})
+	expectedPrepareSelect := mock.ExpectPrepare("SELECT id, name FROM user WHERE id=?")
+	expectedPrepareSelect.ExpectQuery().WillReturnError(fmt.Errorf("some error"))
+
+	repository := repositories.UsersRepository{DB: db}
+
+	// Execute
+	requestUser := models.User{
+		Name: userName,
+	}
+	_, err = repository.CreateUser(&requestUser)
+
+	// Assert
+	if mockErr := mock.ExpectationsWereMet(); mockErr != nil {
+		t.Errorf("there were unfulfilled expectations: %s", mockErr)
+	}
+	if err == nil {
+		t.Errorf("Expected error to be returned but is nil")
+	}
+}
+
+type mockResult struct{}
+
+func (result *mockResult) LastInsertId() (int64, error) {
+	return 1, nil
+}
+func (result *mockResult) RowsAffected() (int64, error) {
+	return 1, nil
 }
