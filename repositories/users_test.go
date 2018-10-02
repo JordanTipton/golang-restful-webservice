@@ -70,8 +70,8 @@ func TestGetUserByIDNotFound(t *testing.T) {
 	if mockErr := mock.ExpectationsWereMet(); mockErr != nil {
 		t.Errorf("there were unfulfilled expectations: %s", mockErr)
 	}
-	if err != errors.NotFound {
-		t.Errorf("Error, expected: %s, got: %s", errors.NotFound, err.Error())
+	if _, ok := err.(errors.NotFound); !ok {
+		t.Errorf("Error, expected: NotFound, got: %s", err.Error())
 	}
 }
 
@@ -144,7 +144,7 @@ func TestCreateUser(t *testing.T) {
 	}
 }
 
-func TestCreateUserNotFound(t *testing.T) {
+func TestCreateUserErrorSelect(t *testing.T) {
 	// Setup
 	userName := "Bob"
 	db, mock, err := sqlmock.New()
@@ -170,12 +170,12 @@ func TestCreateUserNotFound(t *testing.T) {
 	if mockErr := mock.ExpectationsWereMet(); mockErr != nil {
 		t.Errorf("there were unfulfilled expectations: %s", mockErr)
 	}
-	if err != errors.NotFound {
-		t.Errorf("Error, expected: %s, got: %s", errors.NotFound, err.Error())
+	if err == nil {
+		t.Errorf("Expected error to be returned but is nil")
 	}
 }
 
-func TestCreateUserError(t *testing.T) {
+func TestCreateUserErrorInsert(t *testing.T) {
 	// Setup
 	userName := "Bob"
 	db, mock, err := sqlmock.New()

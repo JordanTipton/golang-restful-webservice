@@ -1,9 +1,12 @@
 package errors
 
-// NotFound error matches string returned by sql driver
-const NotFound = Error("sql: no rows in result set")
+// SQLNotFound error string returned by sql driver
+const SQLNotFound = "sql: no rows in result set"
 
-//Error type
-type Error string
+// NotFound error type
+type NotFound struct {
+	Message string
+}
 
-func (e Error) Error() string { return string(e) }
+// Error method for NotFound
+func (e NotFound) Error() string { return e.Message }

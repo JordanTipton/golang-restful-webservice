@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"strconv"
 
+	"bitbucket.org/jordantipton/econvote-core/services/errors"
 	"github.com/go-chi/chi"
 	"github.com/jordantipton/golang-restful-webservice/apis/converters"
 	"github.com/jordantipton/golang-restful-webservice/apis/models"
 	"github.com/jordantipton/golang-restful-webservice/services"
-	"github.com/jordantipton/golang-restful-webservice/services/errors"
 )
 
 type (
@@ -43,7 +43,7 @@ func (r *UsersResource) GetUser(res http.ResponseWriter, req *http.Request) {
 	}
 	serviceUser, err := r.Service.GetUser(userID)
 	if err != nil {
-		if err == errors.NotFound {
+		if _, ok := err.(errors.NotFound); ok {
 			http.Error(res, fmt.Sprintf("User with ID %d not found", userID), http.StatusNotFound)
 		} else {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -57,10 +57,6 @@ func (r *UsersResource) GetUser(res http.ResponseWriter, req *http.Request) {
 // CreateUser and return result
 func (r *UsersResource) CreateUser(res http.ResponseWriter, req *http.Request) {
 	var user models.User
-	if req.Body == nil {
-		http.Error(res, "Please send a request body", 400)
-		return
-	}
 	defer req.Body.Close()
 	err := json.NewDecoder(req.Body).Decode(&user)
 	if err != nil {
@@ -69,8 +65,8 @@ func (r *UsersResource) CreateUser(res http.ResponseWriter, req *http.Request) {
 	}
 	serviceUser, err := r.Service.CreateUser(converters.FromUser(&user))
 	if err != nil {
-		if err == errors.BadRequest {
-			http.Error(res, fmt.Sprintf("Bad Request"), http.StatusBadRequest)
+		if _, ok := err.(errors.InvalidArgument); ok {
+			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 		}

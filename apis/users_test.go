@@ -7,11 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"bitbucket.org/jordantipton/econvote-core/services/errors"
 	"github.com/go-chi/chi"
 
 	"github.com/jordantipton/golang-restful-webservice/apis"
 	"github.com/jordantipton/golang-restful-webservice/apis/models"
-	"github.com/jordantipton/golang-restful-webservice/services/errors"
 	serviceModels "github.com/jordantipton/golang-restful-webservice/services/models"
 )
 
@@ -118,7 +118,7 @@ func TestGetUserByIDNotFound(t *testing.T) {
 	expectedBody := fmt.Sprintf("User with ID %d not found\n", userID)
 	mockUsersServicer := mockUsersServicer{
 		mockGetUser: func(userID int) (*serviceModels.User, error) {
-			return nil, errors.NotFound
+			return nil, errors.NotFound{Message: expectedBody}
 		},
 	}
 
@@ -217,9 +217,10 @@ func TestCreateUserError(t *testing.T) {
 		ID:   1,
 		Name: "Name",
 	}
+	expectedBody := "some error"
 	mockUsersServicer := mockUsersServicer{
 		mockCreateUser: func(user *serviceModels.User) (*serviceModels.User, error) {
-			return nil, fmt.Errorf("some error")
+			return nil, fmt.Errorf(expectedBody)
 		},
 	}
 
@@ -237,13 +238,17 @@ func TestCreateUserError(t *testing.T) {
 	if w.Code != 500 {
 		t.Errorf("HTTP status code, expected: %d, got: %d", 500, w.Code)
 	}
+	body := w.Body.String()
+	if body != expectedBody+"\n" {
+		t.Errorf("Response body, expected: %s, got: %s", expectedBody, body)
+	}
 }
 
 func TestCreateUserNilBodyBadRequest(t *testing.T) {
 	// Setup
 	mockUsersServicer := mockUsersServicer{
 		mockCreateUser: func(user *serviceModels.User) (*serviceModels.User, error) {
-			return nil, errors.BadRequest
+			return nil, errors.InvalidArgument{Message: "Missing body"}
 		},
 	}
 
@@ -264,9 +269,10 @@ func TestCreateUserNilBodyBadRequest(t *testing.T) {
 
 func TestCreateUserNoNameBadRequest(t *testing.T) {
 	// Setup
+	expectedBody := "User must have a name"
 	mockUsersServicer := mockUsersServicer{
 		mockCreateUser: func(user *serviceModels.User) (*serviceModels.User, error) {
-			return nil, errors.BadRequest
+			return nil, errors.InvalidArgument{Message: expectedBody}
 		},
 	}
 
@@ -283,5 +289,9 @@ func TestCreateUserNoNameBadRequest(t *testing.T) {
 	// Assert
 	if w.Code != 400 {
 		t.Errorf("HTTP status code, expected: %d, got: %d", 400, w.Code)
+	}
+	body := w.Body.String()
+	if body != expectedBody+"\n" {
+		t.Errorf("Response body, expected: %s, got: %s", expectedBody, body)
 	}
 }

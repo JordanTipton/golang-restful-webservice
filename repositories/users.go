@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/jordantipton/golang-restful-webservice/repositories/errors"
 	"github.com/jordantipton/golang-restful-webservice/repositories/models"
@@ -30,8 +31,8 @@ func (repository *UsersRepository) GetUser(userID int) (*models.User, error) {
 	defer stmt.Close()
 	err = stmt.QueryRow(userID).Scan(&user.ID, &user.Name)
 	if err != nil {
-		if err.Error() == errors.NotFound.Error() {
-			return nil, errors.NotFound
+		if err.Error() == errors.SQLNotFound {
+			return nil, errors.NotFound{Message: fmt.Sprintf("User with ID %d not found", userID)}
 		}
 		return nil, err
 	}
@@ -57,9 +58,6 @@ func (repository *UsersRepository) CreateUser(user *models.User) (*models.User, 
 	defer stmtSelect.Close()
 	err = stmtSelect.QueryRow(result.LastInsertId()).Scan(&resultUser.ID, &resultUser.Name)
 	if err != nil {
-		if err.Error() == errors.NotFound.Error() {
-			return nil, errors.NotFound
-		}
 		return nil, err
 	}
 	return &resultUser, nil

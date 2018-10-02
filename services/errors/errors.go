@@ -1,12 +1,17 @@
 package errors
 
-// NotFound error
-const NotFound = Error("Not Found")
+// NotFound error type
+type NotFound struct {
+	Message string
+}
 
-// BadRequest error
-const BadRequest = Error("Bad Request")
+// InvalidArgument error type
+type InvalidArgument struct {
+	Message string
+}
 
-//Error type
-type Error string
+// Error method for NotFound
+func (e NotFound) Error() string { return e.Message }
 
-func (e Error) Error() string { return string(e) }
+// Error method for InvalidArgument
+func (e InvalidArgument) Error() string { return e.Message }

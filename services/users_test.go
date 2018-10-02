@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"bitbucket.org/jordantipton/econvote-core/services/errors"
 	repositoryErrors "github.com/jordantipton/golang-restful-webservice/repositories/errors"
 	repositoryModels "github.com/jordantipton/golang-restful-webservice/repositories/models"
 	"github.com/jordantipton/golang-restful-webservice/services"
-	"github.com/jordantipton/golang-restful-webservice/services/errors"
 	"github.com/jordantipton/golang-restful-webservice/services/models"
 )
 
@@ -73,7 +73,7 @@ func TestGetUserByIDNotFound(t *testing.T) {
 	// Setup
 	mockUserPersister := mockUserPersister{
 		mockGetUser: func(userID int) (*repositoryModels.User, error) {
-			return nil, repositoryErrors.NotFound
+			return nil, repositoryErrors.NotFound{Message: repositoryErrors.SQLNotFound}
 		},
 	}
 
@@ -89,8 +89,8 @@ func TestGetUserByIDNotFound(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error to not not be nil")
 	}
-	if err != errors.NotFound {
-		t.Errorf("Error, expected: %s, got: %s", errors.NotFound, err.Error())
+	if _, ok := err.(errors.NotFound); !ok {
+		t.Errorf("Error, expected: NotFound, got: %s", err.Error())
 	}
 }
 
@@ -150,8 +150,8 @@ func TestCreateUserNil(t *testing.T) {
 	_, err := usersService.CreateUser(nil)
 
 	// Assert
-	if err != errors.BadRequest {
-		t.Errorf("Error, expected: %s, got: %s", errors.BadRequest, err.Error())
+	if _, ok := err.(errors.InvalidArgument); !ok {
+		t.Errorf("Error, expected: InvalidArgument, got: %s", err.Error())
 	}
 }
 
@@ -165,8 +165,8 @@ func TestCreateUserNoName(t *testing.T) {
 	_, err := usersService.CreateUser(&models.User{Name: repositoryUser.Name})
 
 	// Assert
-	if err != errors.BadRequest {
-		t.Errorf("Error, expected: %s, got: %s", errors.BadRequest, err.Error())
+	if _, ok := err.(errors.InvalidArgument); !ok {
+		t.Errorf("Error, expected: InvalidArgument, got: %s", err.Error())
 	}
 }
 
