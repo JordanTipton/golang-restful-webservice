@@ -2,9 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
-	"strconv"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -12,24 +11,18 @@ import (
 	"github.com/go-chi/cors"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jordantipton/golang-restful-webservice/apis"
-	"github.com/jordantipton/golang-restful-webservice/app"
 	"github.com/jordantipton/golang-restful-webservice/repositories"
 	"github.com/jordantipton/golang-restful-webservice/services"
 )
 
 func main() {
-	// Load configuration
-	if err := app.LoadConfig("./config/config.json"); err != nil {
-		panic(fmt.Errorf("Failed to load configuration: %s", err))
-	}
-
 	// Connect to database
-	db, err := sql.Open("mysql", app.Config.DSN)
+	db, err := sql.Open("mysql", os.Getenv("DSN"))
 	if err != nil {
 		panic(err)
 	}
 	r := buildRouter(db)
-	http.ListenAndServe(":"+strconv.Itoa(app.Config.ServerPort), r)
+	http.ListenAndServe(":8080", r)
 }
 
 func buildRouter(db *sql.DB) *chi.Mux {
