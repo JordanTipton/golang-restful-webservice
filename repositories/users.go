@@ -51,12 +51,16 @@ func (repository *UsersRepository) CreateUser(user *models.User) (*models.User, 
 	if err != nil {
 		return nil, err
 	}
+	lastInsertedID, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
 	stmtSelect, err := repository.DB.Prepare("SELECT id, name FROM user WHERE id=?")
 	if err != nil {
 		return nil, err
 	}
 	defer stmtSelect.Close()
-	err = stmtSelect.QueryRow(result.LastInsertId()).Scan(&resultUser.ID, &resultUser.Name)
+	err = stmtSelect.QueryRow(lastInsertedID).Scan(&resultUser.ID, &resultUser.Name)
 	if err != nil {
 		return nil, err
 	}
