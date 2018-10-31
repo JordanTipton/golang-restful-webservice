@@ -3,11 +3,9 @@ package services
 import (
 	"fmt"
 
-	"bitbucket.org/jordantipton/econvote-core/services/errors"
-	"github.com/jordantipton/golang-restful-webservice/repositories"
-	repositoryErrors "github.com/jordantipton/golang-restful-webservice/repositories/errors"
-	"github.com/jordantipton/golang-restful-webservice/services/converters"
-	"github.com/jordantipton/golang-restful-webservice/services/models"
+	"github.com/jordantipton/golang-restful-webservice/models"
+	"github.com/jordantipton/golang-restful-webservice/models/errors"
+	"github.com/jordantipton/golang-restful-webservice/services/interfaces"
 )
 
 type (
@@ -19,23 +17,22 @@ type (
 
 	// UsersService providers user information services
 	UsersService struct {
-		UsersPersister repositories.UsersPersister
+		UsersPersister interfaces.UsersPersister
 	}
 )
 
 // GetUser by ID
 func (usersService *UsersService) GetUser(userID int) (*models.User, error) {
-	daoUser, err := usersService.UsersPersister.GetUser(userID)
+	user, err := usersService.UsersPersister.GetUser(userID)
 	if err != nil {
-		if _, ok := err.(repositoryErrors.NotFound); ok {
+		if _, ok := err.(errors.NotFound); ok {
 			return nil, errors.NotFound{Message: fmt.Sprintf("User with ID %d not found", userID)}
 		}
 		return nil, err
 	}
-	if daoUser == nil {
+	if user == nil {
 		return nil, errors.NotFound{Message: fmt.Sprintf("User with ID %d not found", userID)}
 	}
-	user := converters.ToUser(daoUser)
 	return user, nil
 }
 
@@ -47,10 +44,9 @@ func (usersService *UsersService) CreateUser(user *models.User) (*models.User, e
 	if user.Name == "" {
 		return nil, errors.InvalidArgument{Message: "User name cannot be empty"}
 	}
-	daoUser, err := usersService.UsersPersister.CreateUser(converters.FromUser(user))
+	resultUser, err := usersService.UsersPersister.CreateUser(user)
 	if err != nil {
 		return nil, err
 	}
-	resultUser := converters.ToUser(daoUser)
 	return resultUser, nil
 }

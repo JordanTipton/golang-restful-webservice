@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/jordantipton/golang-restful-webservice/models"
+	"github.com/jordantipton/golang-restful-webservice/models/errors"
 	"github.com/jordantipton/golang-restful-webservice/repositories"
-	"github.com/jordantipton/golang-restful-webservice/repositories/errors"
-	"github.com/jordantipton/golang-restful-webservice/repositories/models"
 )
 
 //GetUser tests

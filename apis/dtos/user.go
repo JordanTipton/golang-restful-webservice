@@ -1,4 +1,4 @@
-package models
+package dtos
 
 // User represents a user dto
 type User struct {

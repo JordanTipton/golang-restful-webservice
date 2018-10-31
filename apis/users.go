@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"bitbucket.org/jordantipton/econvote-core/services/errors"
 	"github.com/go-chi/chi"
 	"github.com/jordantipton/golang-restful-webservice/apis/converters"
-	"github.com/jordantipton/golang-restful-webservice/apis/models"
+	"github.com/jordantipton/golang-restful-webservice/apis/dtos"
+	"github.com/jordantipton/golang-restful-webservice/models/errors"
 	"github.com/jordantipton/golang-restful-webservice/services"
 )
 
@@ -56,7 +56,7 @@ func (r *UsersResource) GetUser(res http.ResponseWriter, req *http.Request) {
 
 // CreateUser and return result
 func (r *UsersResource) CreateUser(res http.ResponseWriter, req *http.Request) {
-	var user models.User
+	var user dtos.User
 	defer req.Body.Close()
 	err := json.NewDecoder(req.Body).Decode(&user)
 	if err != nil {

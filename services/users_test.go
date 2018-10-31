@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"bitbucket.org/jordantipton/econvote-core/services/errors"
-	repositoryErrors "github.com/jordantipton/golang-restful-webservice/repositories/errors"
-	repositoryModels "github.com/jordantipton/golang-restful-webservice/repositories/models"
+	"github.com/jordantipton/golang-restful-webservice/models"
+	"github.com/jordantipton/golang-restful-webservice/models/errors"
 	"github.com/jordantipton/golang-restful-webservice/services"
-	"github.com/jordantipton/golang-restful-webservice/services/models"
 )
 
 /*
@@ -16,18 +14,18 @@ import (
 */
 
 type mockUserPersister struct {
-	mockGetUser    func(userID int) (*repositoryModels.User, error)
-	mockCreateUser func(user *repositoryModels.User) (*repositoryModels.User, error)
+	mockGetUser    func(userID int) (*models.User, error)
+	mockCreateUser func(user *models.User) (*models.User, error)
 }
 
-func (m *mockUserPersister) GetUser(userID int) (*repositoryModels.User, error) {
+func (m *mockUserPersister) GetUser(userID int) (*models.User, error) {
 	if m.mockGetUser != nil {
 		return m.mockGetUser(userID)
 	}
 	return nil, nil
 }
 
-func (m *mockUserPersister) CreateUser(user *repositoryModels.User) (*repositoryModels.User, error) {
+func (m *mockUserPersister) CreateUser(user *models.User) (*models.User, error) {
 	if m.mockCreateUser != nil {
 		return m.mockCreateUser(user)
 	}
@@ -39,9 +37,9 @@ func (m *mockUserPersister) CreateUser(user *repositoryModels.User) (*repository
 */
 func TestGetUserByID(t *testing.T) {
 	// Setup
-	repositoryUser := &repositoryModels.User{ID: 1, Name: "Name"}
+	repositoryUser := &models.User{ID: 1, Name: "Name"}
 	mockUserPersister := mockUserPersister{
-		mockGetUser: func(userID int) (*repositoryModels.User, error) {
+		mockGetUser: func(userID int) (*models.User, error) {
 			if userID == repositoryUser.ID {
 				return repositoryUser, nil
 			}
@@ -72,8 +70,8 @@ func TestGetUserByID(t *testing.T) {
 func TestGetUserByIDNotFound(t *testing.T) {
 	// Setup
 	mockUserPersister := mockUserPersister{
-		mockGetUser: func(userID int) (*repositoryModels.User, error) {
-			return nil, repositoryErrors.NotFound{Message: repositoryErrors.SQLNotFound}
+		mockGetUser: func(userID int) (*models.User, error) {
+			return nil, errors.NotFound{Message: "sql: no rows in result set"}
 		},
 	}
 
@@ -97,7 +95,7 @@ func TestGetUserByIDNotFound(t *testing.T) {
 func TestGetUserByIDError(t *testing.T) {
 	// Setup
 	mockUserPersister := mockUserPersister{
-		mockGetUser: func(userID int) (*repositoryModels.User, error) {
+		mockGetUser: func(userID int) (*models.User, error) {
 			return nil, fmt.Errorf("some error")
 		},
 	}
@@ -115,9 +113,9 @@ func TestGetUserByIDError(t *testing.T) {
 
 func TestCreateUser(t *testing.T) {
 	// Setup
-	repositoryUser := &repositoryModels.User{ID: 1, Name: "Name"}
+	repositoryUser := &models.User{ID: 1, Name: "Name"}
 	mockUserPersister := mockUserPersister{
-		mockCreateUser: func(*repositoryModels.User) (*repositoryModels.User, error) {
+		mockCreateUser: func(*models.User) (*models.User, error) {
 			return repositoryUser, nil
 		},
 	}
@@ -157,7 +155,7 @@ func TestCreateUserNil(t *testing.T) {
 
 func TestCreateUserNoName(t *testing.T) {
 	// Setup
-	repositoryUser := &repositoryModels.User{ID: 1, Name: ""}
+	repositoryUser := &models.User{ID: 1, Name: ""}
 
 	usersService := services.UsersService{UsersPersister: &mockUserPersister{}}
 
@@ -172,9 +170,9 @@ func TestCreateUserNoName(t *testing.T) {
 
 func TestCreateUserError(t *testing.T) {
 	// Setup
-	repositoryUser := &repositoryModels.User{ID: 1, Name: "Name"}
+	repositoryUser := &models.User{ID: 1, Name: "Name"}
 	mockUserPersister := mockUserPersister{
-		mockCreateUser: func(*repositoryModels.User) (*repositoryModels.User, error) {
+		mockCreateUser: func(*models.User) (*models.User, error) {
 			return nil, fmt.Errorf("some error")
 		},
 	}

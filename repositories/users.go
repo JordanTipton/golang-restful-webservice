@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/jordantipton/golang-restful-webservice/repositories/errors"
-	"github.com/jordantipton/golang-restful-webservice/repositories/models"
+	"github.com/jordantipton/golang-restful-webservice/models"
+	"github.com/jordantipton/golang-restful-webservice/models/errors"
 )
+
+const sqlNotFound = "sql: no rows in result set"
 
 type (
 	// UsersPersister interface for user repositories
@@ -31,7 +33,7 @@ func (repository *UsersRepository) GetUser(userID int) (*models.User, error) {
 	defer stmt.Close()
 	err = stmt.QueryRow(userID).Scan(&user.ID, &user.Name)
 	if err != nil {
-		if err.Error() == errors.SQLNotFound {
+		if err.Error() == sqlNotFound {
 			return nil, errors.NotFound{Message: fmt.Sprintf("User with ID %d not found", userID)}
 		}
 		return nil, err

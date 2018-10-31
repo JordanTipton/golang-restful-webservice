@@ -7,12 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"bitbucket.org/jordantipton/econvote-core/services/errors"
 	"github.com/go-chi/chi"
 
 	"github.com/jordantipton/golang-restful-webservice/apis"
-	"github.com/jordantipton/golang-restful-webservice/apis/models"
-	serviceModels "github.com/jordantipton/golang-restful-webservice/services/models"
+	"github.com/jordantipton/golang-restful-webservice/apis/dtos"
+	models "github.com/jordantipton/golang-restful-webservice/models"
+	"github.com/jordantipton/golang-restful-webservice/models/errors"
 )
 
 /*
@@ -20,18 +20,18 @@ import (
 */
 
 type mockUsersServicer struct {
-	mockGetUser    func(userID int) (*serviceModels.User, error)
-	mockCreateUser func(user *serviceModels.User) (*serviceModels.User, error)
+	mockGetUser    func(userID int) (*models.User, error)
+	mockCreateUser func(user *models.User) (*models.User, error)
 }
 
-func (m *mockUsersServicer) GetUser(userID int) (*serviceModels.User, error) {
+func (m *mockUsersServicer) GetUser(userID int) (*models.User, error) {
 	if m.mockGetUser != nil {
 		return m.mockGetUser(userID)
 	}
 	return nil, nil
 }
 
-func (m *mockUsersServicer) CreateUser(user *serviceModels.User) (*serviceModels.User, error) {
+func (m *mockUsersServicer) CreateUser(user *models.User) (*models.User, error) {
 	if m.mockCreateUser != nil {
 		return m.mockCreateUser(user)
 	}
@@ -48,13 +48,13 @@ func (e mockError) Error() string { return string(e) }
 
 func TestGetUserByID(t *testing.T) {
 	// Setup
-	expectedUser := models.User{
+	expectedUser := dtos.User{
 		ID:   1,
 		Name: "Name",
 	}
-	serviceUser := &serviceModels.User{ID: expectedUser.ID, Name: expectedUser.Name}
+	serviceUser := &models.User{ID: expectedUser.ID, Name: expectedUser.Name}
 	mockUsersServicer := mockUsersServicer{
-		mockGetUser: func(userID int) (*serviceModels.User, error) {
+		mockGetUser: func(userID int) (*models.User, error) {
 			if userID == serviceUser.ID {
 				return serviceUser, nil
 			}
@@ -76,7 +76,7 @@ func TestGetUserByID(t *testing.T) {
 		t.Errorf("HTTP status code, expected: %d, got: %d", 200, w.Code)
 	}
 
-	actualUser := models.User{}
+	actualUser := dtos.User{}
 	json.NewDecoder(w.Body).Decode(&actualUser)
 
 	if expectedUser.ID != actualUser.ID {
@@ -117,7 +117,7 @@ func TestGetUserByIDNotFound(t *testing.T) {
 	userID := 1
 	expectedBody := fmt.Sprintf("User with ID %d not found\n", userID)
 	mockUsersServicer := mockUsersServicer{
-		mockGetUser: func(userID int) (*serviceModels.User, error) {
+		mockGetUser: func(userID int) (*models.User, error) {
 			return nil, errors.NotFound{Message: expectedBody}
 		},
 	}
@@ -147,7 +147,7 @@ func TestGetUserByIDServerError(t *testing.T) {
 	userID := 1
 	expectedBody := "some error\n"
 	mockUsersServicer := mockUsersServicer{
-		mockGetUser: func(userID int) (*serviceModels.User, error) {
+		mockGetUser: func(userID int) (*models.User, error) {
 			return nil, mockError("some error")
 		},
 	}
@@ -174,13 +174,13 @@ func TestGetUserByIDServerError(t *testing.T) {
 
 func TestCreateUser(t *testing.T) {
 	// Setup
-	expectedUser := models.User{
+	expectedUser := dtos.User{
 		ID:   1,
 		Name: "Name",
 	}
-	serviceUser := &serviceModels.User{ID: expectedUser.ID, Name: expectedUser.Name}
+	serviceUser := &models.User{ID: expectedUser.ID, Name: expectedUser.Name}
 	mockUsersServicer := mockUsersServicer{
-		mockCreateUser: func(user *serviceModels.User) (*serviceModels.User, error) {
+		mockCreateUser: func(user *models.User) (*models.User, error) {
 			return serviceUser, nil
 		},
 	}
@@ -188,7 +188,7 @@ func TestCreateUser(t *testing.T) {
 	r := chi.NewRouter()
 	apis.RegisterUsersResource(r, &mockUsersServicer)
 
-	bodyBytes, _ := json.Marshal(models.User{Name: expectedUser.Name})
+	bodyBytes, _ := json.Marshal(dtos.User{Name: expectedUser.Name})
 	req := httptest.NewRequest("POST", "http://localhost:8080/users", bytes.NewReader(bodyBytes))
 	w := httptest.NewRecorder()
 
@@ -200,7 +200,7 @@ func TestCreateUser(t *testing.T) {
 		t.Errorf("HTTP status code, expected: %d, got: %d", 201, w.Code)
 	}
 
-	actualUser := models.User{}
+	actualUser := dtos.User{}
 	json.NewDecoder(w.Body).Decode(&actualUser)
 
 	if expectedUser.ID != actualUser.ID {
@@ -213,13 +213,13 @@ func TestCreateUser(t *testing.T) {
 
 func TestCreateUserError(t *testing.T) {
 	// Setup
-	expectedUser := models.User{
+	expectedUser := dtos.User{
 		ID:   1,
 		Name: "Name",
 	}
 	expectedBody := "some error"
 	mockUsersServicer := mockUsersServicer{
-		mockCreateUser: func(user *serviceModels.User) (*serviceModels.User, error) {
+		mockCreateUser: func(user *models.User) (*models.User, error) {
 			return nil, fmt.Errorf(expectedBody)
 		},
 	}
@@ -227,7 +227,7 @@ func TestCreateUserError(t *testing.T) {
 	r := chi.NewRouter()
 	apis.RegisterUsersResource(r, &mockUsersServicer)
 
-	bodyBytes, _ := json.Marshal(models.User{Name: expectedUser.Name})
+	bodyBytes, _ := json.Marshal(dtos.User{Name: expectedUser.Name})
 	req := httptest.NewRequest("POST", "http://localhost:8080/users", bytes.NewReader(bodyBytes))
 	w := httptest.NewRecorder()
 
@@ -247,7 +247,7 @@ func TestCreateUserError(t *testing.T) {
 func TestCreateUserNilBodyBadRequest(t *testing.T) {
 	// Setup
 	mockUsersServicer := mockUsersServicer{
-		mockCreateUser: func(user *serviceModels.User) (*serviceModels.User, error) {
+		mockCreateUser: func(user *models.User) (*models.User, error) {
 			return nil, errors.InvalidArgument{Message: "Missing body"}
 		},
 	}
@@ -271,7 +271,7 @@ func TestCreateUserNoNameBadRequest(t *testing.T) {
 	// Setup
 	expectedBody := "User must have a name"
 	mockUsersServicer := mockUsersServicer{
-		mockCreateUser: func(user *serviceModels.User) (*serviceModels.User, error) {
+		mockCreateUser: func(user *models.User) (*models.User, error) {
 			return nil, errors.InvalidArgument{Message: expectedBody}
 		},
 	}
@@ -279,7 +279,7 @@ func TestCreateUserNoNameBadRequest(t *testing.T) {
 	r := chi.NewRouter()
 	apis.RegisterUsersResource(r, &mockUsersServicer)
 
-	bodyBytes, _ := json.Marshal(models.User{})
+	bodyBytes, _ := json.Marshal(dtos.User{})
 	req := httptest.NewRequest("POST", "http://localhost:8080/users", bytes.NewReader(bodyBytes))
 	w := httptest.NewRecorder()
 
