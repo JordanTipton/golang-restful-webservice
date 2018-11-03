@@ -11,12 +11,6 @@ import (
 const sqlNotFound = "sql: no rows in result set"
 
 type (
-	// UsersPersister interface for user repositories
-	UsersPersister interface {
-		GetUser(userID int) (*models.User, error)
-		CreateUser(user *models.User) (*models.User, error)
-	}
-
 	// UsersRepository represents a repository for user information
 	UsersRepository struct {
 		DB *sql.DB
